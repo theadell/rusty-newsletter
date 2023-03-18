@@ -1,16 +1,15 @@
-use actix_web::{web, App, HttpRequest, HttpServer, Responder};
-async fn greet(req: HttpRequest) -> impl Responder {
-let name = req.match_info().get("name").unwrap_or("World");
-format!("Hello {}!", &name)
-}
+use std::net::TcpListener;
+
+use rusty_newsletter::startup::run;
+use rusty_newsletter::configuration::get_configuration;
+
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-HttpServer::new(|| {
-App::new()
-.route("/", web::get().to(greet))
-.route("/{name}", web::get().to(greet))
-})
-.bind("127.0.0.1:8000")?
-.run()
-.await
+    let configuration = get_configuration().expect("Failed to read configuration.");
+    let address = format!("127.0.0.1:{}", configuration.application_port);
+    let lisener = TcpListener::bind(address).expect("Failed to bind to random port");
+    let port = lisener.local_addr().unwrap().port();
+    println!("127.0.0.1:{}",port);
+    let server = run(lisener).expect("failed to start server");
+    server.await
 }
